@@ -23,18 +23,13 @@ The cronjob looks like this:
 */2 * * * * root /usr/bin/python36 /opt/kill_hoggs/kill_hoggs.py --slack
 ```
 
-
 ## Run tests
 
 ```python
 
 python -m unittest unittests.test_kill_hogs
 
-
 # Or if you want coverage information.
-
 coverage run -m unittest unittests.test_kill_hogs
 coverage report -m kill_hogs.py
 ```
-
-
