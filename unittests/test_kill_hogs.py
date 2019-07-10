@@ -1,7 +1,7 @@
-import unittest
 from unittest import mock
-import random
 import kill_hogs
+import random
+import unittest
 
 
 class PostToSlackTestcase(unittest.TestCase):
@@ -59,7 +59,7 @@ class KillhogsTestCase(unittest.TestCase):
                 self.stderr = stderr
 
         if args[0] == 'w -s -h':
-            with open('terminalsdump', 'r+b') as f:
+            with open('unittests/terminalsdump', 'r+b') as f:
                 data = f.read()
             return MockedCompletedProcess(stdout=data)
 

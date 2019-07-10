@@ -12,6 +12,29 @@ A message is also send to slack to inform us.
 
 ## Installation.
 
-We install the cronjob via ansible.
+We install the cronjob via ansible on a centos7 host instead of installing the requirements with pip, we opt for the following yum packages.
 
-`ansible 
+- python36-requests
+- python36-psutil
+
+The cronjob looks like this:
+
+```cronjob
+*/2 * * * * root /usr/bin/python36 /opt/kill_hoggs/kill_hoggs.py --slack
+```
+
+
+## Run tests
+
+```python
+
+python -m unittest unittests.test_kill_hogs
+
+
+# Or if you want coverage information.
+
+coverage run -m unittest unittests.test_kill_hogs
+coverage report -m kill_hogs.py
+```
+
+
