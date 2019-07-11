@@ -6,5 +6,5 @@ test:
   script:
   - apt-get update -qy
   - apt-get install -y python-pip
-  - pip3 install -r requirements.txt
+  - pip install -r requirements.txt
   - coverage run -m unittest unittests.test_kill_hogs
