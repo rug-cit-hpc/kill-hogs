@@ -1,10 +1,14 @@
 stages:
-  - test
+  - python36
 
-test:
-  stage: test
-  script:
-  - apt-get update -qy
-  - apt-get install -y python-pip
-  - pip install -r requirements.txt
-  - coverage run -m unittest unittests.test_kill_hogs
+python36:
+    stage: python36
+    image: python:3.6
+    when: always
+    allow_failure: yes
+    script:
+        - apt-get update -q -y
+        - apt-get update -qy
+        - apt-get install -y python-pip
+        - pip install -r requirements_dev.txt
+        - coverage run -m unittest unittests.test_kill_hogs
