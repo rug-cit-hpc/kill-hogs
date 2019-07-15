@@ -171,7 +171,7 @@ Your processes have been killed and this incident has been reported.
 For more information, see https://redmine.hpc.rug.nl/redmine/projects/peregrine/wiki/FAQ"""
             send_message_to_terminals(proc.username(), warning)
             if slack:
-                post_to_slack('\n'.join(message))
+                post_to_slack('\n'.join(message), slack_url)
             if not dummy:
                 terminate(data['processes'])
 
