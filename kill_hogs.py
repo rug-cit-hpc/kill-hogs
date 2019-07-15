@@ -157,10 +157,13 @@ def kill_hogs(memory_threshold,
                 'The following processes will be killed:'
             ]
             for proc in data['processes']:
-                message.append(
-                    '{} pid {} {} memory {:.2f}% cpu {:.2f}%'.format(
+                try:
+                    message.append(
+                     '{} pid {} {} memory {:.2f}% cpu {:.2f}%'.format(
                         proc.username(), proc.pid, proc.name(),
                         proc.cached_memory_percent, proc.cached_cpu_percent))
+                except (psutil.NoSuchProcess, FileNotFoundError) as e:
+                    pass
             logging.info('\n'.join(message))
             if warning == '':
                 warning = """Please submit your processes as a job.
