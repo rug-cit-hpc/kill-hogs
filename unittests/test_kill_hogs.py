@@ -2,10 +2,10 @@ from unittest import mock
 import kill_hogs
 import random
 import unittest
+import yaml
 
 
 class PostToSlackTestcase(unittest.TestCase):
-
     def mocked_requests_post(*args, **kwargs):
         """
         Adapted from an answer here:
@@ -32,7 +32,9 @@ class PostToSlackTestcase(unittest.TestCase):
         Call post_to_slack and make sure requests.post was called with the
         right parameters.
         """
-        kill_hogs.post_to_slack('Hello world', slack_url='https://hooks.slack.com/services/some/random/string')
+        kill_hogs.post_to_slack(
+            'Hello world',
+            slack_url='https://hooks.slack.com/services/some/random/string')
 
         # assert that our mocked function was called with the right parameters
         self.assertIn(
@@ -47,7 +49,16 @@ class PostToSlackTestcase(unittest.TestCase):
 
 class KillhogsTestCase(unittest.TestCase):
 
-    user_pattern = '^((s|p|f)[0-9]{5,7}|umcg-[a-z]{3,10})'
+    dummy_config = '''
+---
+slack_url: 'https://hooks.slack.com/services/some/random/string'
+user_pattern: '^((s|p|f)[0-9]{5,7}|umcg-[a-z]{3,10})'
+terminal_warning: |
+    Please submit your processes as a job.
+    Your processes have been killed and this incident has been reported.
+    For more information, see https://redmine.hpc.rug.nl/redmine/projects/peregrine/wiki/FAQ
+'''
+    config_dict = yaml.load(dummy_config)
 
     def mocked_subprocess_run(*args, **kwargs):
         """
@@ -61,7 +72,18 @@ class KillhogsTestCase(unittest.TestCase):
         if args[0] == 'w -s -h':
             with open('unittests/terminalsdump', 'r+b') as f:
                 data = f.read()
-            return MockedCompletedProcess(stdout=data)
+
+        elif args[0] == 'finger p458749 -s -m':
+            with open('unittests/fingerdump', 'r+b') as f:
+                data = f.read()
+
+        elif 'finger' in args[0]:
+            data = b'finger: mysteryguest: no such user.'
+
+        else:
+            data = None
+
+        return MockedCompletedProcess(stdout=data)
 
     def mocked_psutil_process_iter(*args, **kwargs):
         """
@@ -133,7 +155,8 @@ class KillhogsTestCase(unittest.TestCase):
     @mock.patch('psutil.process_iter', side_effect=mocked_psutil_process_iter)
     def test_no_innocents_are_killed(self, mock_run, mock_terminate,
                                      mock_process_iter):
-        kill_hogs.kill_hogs(memory_threshold=10, cpu_threshold=600, user_pattern=self.user_pattern)
+        kill_hogs.kill_hogs(
+            config=self.config_dict, memory_threshold=10, cpu_threshold=600)
         self.assertFalse(mock_terminate.called)
 
     @mock.patch('subprocess.run', side_effect=mocked_subprocess_run)
@@ -141,7 +164,8 @@ class KillhogsTestCase(unittest.TestCase):
     @mock.patch('psutil.process_iter', side_effect=mocked_psutil_process_iter)
     def test_violators_are_shot(self, mock_run, mock_terminate,
                                 mock_process_iter):
-        kill_hogs.kill_hogs(memory_threshold=10, cpu_threshold=9.5, user_pattern=self.user_pattern)
+        kill_hogs.kill_hogs(
+            config=self.config_dict, memory_threshold=10, cpu_threshold=9.5)
         self.assertTrue(mock_terminate.called)
 
     def test_is_restricted(self):
@@ -149,21 +173,18 @@ class KillhogsTestCase(unittest.TestCase):
         self.assertTrue(kill_hogs.is_restricted('s4579985'))
         self.assertFalse(kill_hogs.is_restricted('root'))
 
-
-class MainTestCase(unittest.TestCase):
-    dummy_config = '''
----
-slack_url: 'https://hooks.slack.com/services/some/random/string'
-user_pattern: '^((s|p|f)[0-9]{5,7}|umcg-[a-z]{3,10})'
-'''
-
     @mock.patch('builtins.open', mock.mock_open(read_data=dummy_config))
     @mock.patch('sys.argv', ['/opt/kill_hogs/kill_hogs.py'])
-    @mock.patch('subprocess.run', side_effect=KillhogsTestCase.mocked_subprocess_run)
-    @mock.patch('kill_hogs.terminate', side_effect=KillhogsTestCase.mocked_terminate)
-    @mock.patch('psutil.process_iter', side_effect=KillhogsTestCase.mocked_psutil_process_iter)
+    @mock.patch('subprocess.run', side_effect=mocked_subprocess_run)
+    @mock.patch('kill_hogs.terminate', side_effect=mocked_terminate)
+    @mock.patch('psutil.process_iter', side_effect=mocked_psutil_process_iter)
     def test_main(self, mock_run, mock_terminate, mock_process_iter):
         kill_hogs.main()
+
+    @mock.patch('subprocess.run', side_effect=mocked_subprocess_run)
+    def test_find_email(self, mock_run):
+        self.assertEqual(
+            kill_hogs.find_email('p458749'), 'E.R.T.scrooge@rug.nl')
 
 
 if __name__ == '__main__':

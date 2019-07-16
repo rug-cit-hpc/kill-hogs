@@ -7,6 +7,7 @@ import logging
 import psutil
 import re
 import requests
+import smtplib
 import subprocess
 import time
 import yaml
@@ -96,14 +97,13 @@ def is_restricted(username: str, pattern: str = '^(?!root).*'):
     return re.match(pattern, username) is not None
 
 
-def kill_hogs(memory_threshold,
+def kill_hogs(config: dict,
+              memory_threshold,
               cpu_threshold,
               dummy: bool = False,
               slack: bool = False,
-              slack_url = None,
-              interval: float = .3,
-              warning: str = '',
-              user_pattern = None):
+              email: bool = False,
+              interval: float = .3):
     """
     Kill all processes of a user using more than <threshold> % of memory. And cpu.
     For efficiency reasons only processes using more than .1 % of the available
@@ -138,14 +138,14 @@ def kill_hogs(memory_threshold,
                 continue  # do not kill root processes.
             # Check username here. It is somewhat expensive.
             username = proc.username()
-            if not is_restricted(username, user_pattern):
+            if not is_restricted(username, config['user_pattern']):
                 continue
 
             users[username]['memory_percent'] += proc.cached_memory_percent
             users[username]['cpu_percent'] += proc.cached_cpu_percent
 
             users[username]['processes'].append(proc)
-        except (psutil.NoSuchProcess, FileNotFoundError) as e:
+        except (psutil.NoSuchProcess, FileNotFoundError):
             pass
 
     for username, data in users.items():
@@ -159,21 +159,72 @@ def kill_hogs(memory_threshold,
             for proc in data['processes']:
                 try:
                     message.append(
-                     '{} pid {} {} memory {:.2f}% cpu {:.2f}%'.format(
-                        proc.username(), proc.pid, proc.name(),
-                        proc.cached_memory_percent, proc.cached_cpu_percent))
-                except (psutil.NoSuchProcess, FileNotFoundError) as e:
+                        '{} pid {} {} memory {:.2f}% cpu {:.2f}%'.format(
+                            proc.username(), proc.pid, proc.name(),
+                            proc.cached_memory_percent,
+                            proc.cached_cpu_percent))
+                except (psutil.NoSuchProcess, FileNotFoundError):
                     pass
             logging.info('\n'.join(message))
-            if warning == '':
-                warning = """Please submit your processes as a job.
-Your processes have been killed and this incident has been reported.
-For more information, see https://redmine.hpc.rug.nl/redmine/projects/peregrine/wiki/FAQ"""
-            send_message_to_terminals(proc.username(), warning)
+            send_message_to_terminals(proc.username(),
+                                      config['terminal_warning'])
             if slack:
-                post_to_slack('\n'.join(message), slack_url)
+                post_to_slack('\n'.join(message), config['slack_url'])
+            email_address = find_email(proc.username())
+            if email and email_address is not None:
+                email_message = config['mail_body']
+                email_message += '\n'.join(message)
+                send_mail(config['from_address'], email_address, email_message)
             if not dummy:
                 terminate(data['processes'])
+
+
+def find_email(username):
+    """
+    Return the email adress of <username> as reported by finger.
+
+    Args:
+      username (string): the username of the account.
+
+    Returns:
+      string: email adress or None
+
+    """
+    finger = subprocess.run(
+        'finger {} -s -m'.format(username),
+        shell=True,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE)
+    try:
+        data = finger.stdout.decode("utf-8").split('\n')
+        address = data[1].split()[1]
+    except IndexError:
+        # a more explicit pass
+        return None
+    # Basic check: exactly one `@` and at least one `.` after the `@`.
+    if re.match('[^@]+@[^@]+\.[^@]+', address):
+        return address
+
+
+def send_mail(sender: str, receiver: str, message: str):
+    """
+    Send a message to a user whose processes have been killed.
+    """
+
+    message = f"""From: "(Kill Hogs)" <{sender}>
+To: <{receiver}>
+Subject: Processes killed.
+
+{message}
+    """
+
+    try:
+        smtpObj = smtplib.SMTP('localhost')
+        smtpObj.sendmail(sender, [receiver], message)
+        logging.info(f"Successfully sent email to {receiver}.")
+    except Exception as e:
+        logging.error(
+            "Error: unable to send email.\nThe error was:\n{}".format(e))
 
 
 def main():
@@ -194,21 +245,22 @@ def main():
         action='store_true',
         help="Only display what would be killed")
     parser.add_argument(
+        "--email",
+        action='store_true',
+        help="Mail offenders when their processes are killed.")
+    parser.add_argument(
         "--slack", action='store_true', help="Post messages to slack")
     args = parser.parse_args()
 
     with open('/opt/kill_hogs/kill_hogs.yml', 'r') as f:
         config = yaml.load(f.read(), Loader=yaml.BaseLoader)
-    slack_url = config['slack_url']
-    user_pattern = config['user_pattern']
 
     kill_hogs(
+        config=config,
         memory_threshold=args.memory_threshold,
         cpu_threshold=args.cpu_threshold,
         dummy=args.dummy,
-        slack=args.slack,
-        slack_url=slack_url,
-        user_pattern=user_pattern)
+        slack=args.slack)
 
 
 if __name__ == '__main__':

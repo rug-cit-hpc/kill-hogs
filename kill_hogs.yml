@@ -2,3 +2,7 @@
 slack_url: 'https://hooks.slack.com/services/<some secret string>'
 # Pattern (python re) to filter users whose processes can be killed.
 user_pattern: '^((s|p|f)[0-9]{5,7}|umcg-[a-z]{3,10})'
+mail_body: |
+    Dear user,
+
+    We detected resource intensive processes on this machine running from your account.
