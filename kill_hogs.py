@@ -115,6 +115,7 @@ def kill_hogs(config: dict,
         dummy (bool): If true, do not actually kill processes.
         slack (bool): send messages to slack.
     """
+
     users = defaultdict(lambda: {'cpu_percent': 0, 'memory_percent': 0, 'processes': []})
 
     procs = list(psutil.process_iter())
@@ -168,13 +169,17 @@ def kill_hogs(config: dict,
             logging.info('\n'.join(message))
             send_message_to_terminals(proc.username(),
                                       config['terminal_warning'])
+
             if slack:
                 post_to_slack('\n'.join(message), config['slack_url'])
-            email_address = find_email(proc.username())
-            if email and email_address is not None:
-                email_message = config['mail_body']
-                email_message += '\n'.join(message)
-                send_mail(config['from_address'], email_address, email_message)
+
+            if email:
+                email_address = find_email(proc.username())
+                if email_address is not None:
+                    email_message = config['mail_body']
+                    email_message += '\n'.join(message)
+                    send_mail(config['from_address'], email_address,
+                              email_message, config['mail_server_port'])
             if not dummy:
                 terminate(data['processes'])
 
@@ -206,7 +211,7 @@ def find_email(username):
         return address
 
 
-def send_mail(sender: str, receiver: str, message: str):
+def send_mail(sender: str, receiver: str, message: str, port: int = 25):
     """
     Send a message to a user whose processes have been killed.
     """
@@ -219,7 +224,7 @@ Subject: Processes killed.
     """
 
     try:
-        smtpObj = smtplib.SMTP('localhost')
+        smtpObj = smtplib.SMTP('localhost', port=port)
         smtpObj.sendmail(sender, [receiver], message)
         logging.info(f"Successfully sent email to {receiver}.")
     except Exception as e:
@@ -260,7 +265,8 @@ def main():
         memory_threshold=args.memory_threshold,
         cpu_threshold=args.cpu_threshold,
         dummy=args.dummy,
-        slack=args.slack)
+        slack=args.slack,
+        email=args.email)
 
 
 if __name__ == '__main__':
