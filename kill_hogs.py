@@ -246,6 +246,11 @@ def main():
         default=600,
         help="cpu percentage above which processes are killed")
     parser.add_argument(
+        "--cpu_interval",
+        type=float,
+        default=.3,
+        help="Interval accross which to calculate cpu usage.")
+    parser.add_argument(
         "--dummy",
         action='store_true',
         help="Only display what would be killed")
@@ -264,6 +269,7 @@ def main():
         config=config,
         memory_threshold=args.memory_threshold,
         cpu_threshold=args.cpu_threshold,
+        interval=args.cpu_interval,
         dummy=args.dummy,
         slack=args.slack,
         email=args.email)
