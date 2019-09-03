@@ -1,5 +1,5 @@
 from unittest import mock
-import kill_hogs
+from kill_hogs import kill_hogs
 import mailtest
 import random
 import unittest
@@ -168,7 +168,7 @@ mail_body: |
             mock_run.call_args_list)
 
     @mock.patch('subprocess.run', side_effect=mocked_subprocess_run)
-    @mock.patch('kill_hogs.terminate', side_effect=mocked_terminate)
+    @mock.patch('kill_hogs.kill_hogs.terminate', side_effect=mocked_terminate)
     @mock.patch('psutil.process_iter', side_effect=mocked_psutil_process_iter)
     def test_no_innocents_are_killed(self, mock_run, mock_terminate,
                                      mock_process_iter):
@@ -177,7 +177,7 @@ mail_body: |
         self.assertFalse(mock_terminate.called)
 
     @mock.patch('subprocess.run', side_effect=mocked_subprocess_run)
-    @mock.patch('kill_hogs.terminate', side_effect=mocked_terminate)
+    @mock.patch('kill_hogs.kill_hogs.terminate', side_effect=mocked_terminate)
     @mock.patch('psutil.process_iter', side_effect=mocked_psutil_process_iter)
     def test_violators_are_shot(self, mock_run, mock_terminate,
                                 mock_process_iter):
@@ -193,9 +193,9 @@ mail_body: |
     @mock.patch('builtins.open', mock.mock_open(read_data=dummy_config))
     @mock.patch('sys.argv', ['/opt/kill_hogs/kill_hogs.py', '--email', '--cpu_threshold', '9.0'])
     @mock.patch('subprocess.run', side_effect=mocked_subprocess_run)
-    @mock.patch('kill_hogs.terminate', side_effect=mocked_terminate)
+    @mock.patch('kill_hogs.kill_hogs.terminate', side_effect=mocked_terminate)
     @mock.patch('psutil.process_iter', side_effect=mocked_psutil_process_iter)
-    @mock.patch('kill_hogs.find_email', lambda x: 'test@acme.com')
+    @mock.patch('kill_hogs.kill_hogs.find_email', lambda x: 'test@acme.com')
     def test_main(self, mock_run, mock_terminate, mock_process_iter):
         with mailtest.Server() as mt:
             kill_hogs.main()
