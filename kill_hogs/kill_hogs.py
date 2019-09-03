@@ -4,6 +4,7 @@ from collections import defaultdict
 import argparse
 import json
 import logging
+import os
 import psutil
 import re
 import requests
@@ -260,9 +261,14 @@ def main():
         help="Mail offenders when their processes are killed.")
     parser.add_argument(
         "--slack", action='store_true', help="Post messages to slack")
+    parser.add_argument(
+        "--config_file",
+        type=str,
+        default='{}/.kill_hogs/kill_hogs.yml'.format(os.environ['HOME']),
+        help="Config file, default: ~/.kill_hogs/kill_hogs.yml")
     args = parser.parse_args()
 
-    with open('/opt/kill_hogs/kill_hogs.yml', 'r') as f:
+    with open(args.config_file, 'r') as f:
         config = yaml.load(f.read(), Loader=yaml.BaseLoader)
 
     kill_hogs(
