@@ -23,10 +23,11 @@ setup(
     python_requires='>=3.6',
     data_files=[('{}/.kill_hogs/'.format(os.environ['HOME']),['kill_hogs/kill_hogs.yml'])],
     long_description=read('README.md'),
+    long_description_content_type='text/markdown',
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Topic :: Utilities",
-        "License :: OSI Approved :: GPLv3",
+        "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
     ],
     entry_points={
         'console_scripts': ['kill-hogs=kill_hogs.kill_hogs:main'],
