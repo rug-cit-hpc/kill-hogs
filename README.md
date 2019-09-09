@@ -1,3 +1,5 @@
+[![CircleCI](https://circleci.com/gh/erijpkema/kill-hogs.svg?style=svg)](https://circleci.com/gh/erijpkema/kill-hogs)
+
 # Kill hogs
 
 We at team HPC of the university of Groningen run job schedueling clusters.
