@@ -49,9 +49,9 @@ jobs:
           name: run tests
           command: |
             . venv/bin/activate
-            coverage run -m unittest unittests.test_kill_hogs
-            coverage report -m kill_hogs/kill_hogs.py
-            coverage html --include kill_hogs/kill_hogs.py
+            coverage run  --include=kill_hogs/kill_hogs.py  -m unittest unittests.test_kill_hogs
+            coverage report
+            coverage html
 
       - store_artifacts:
           path: htmlcov
