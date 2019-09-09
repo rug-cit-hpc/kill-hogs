@@ -51,7 +51,7 @@ jobs:
             . venv/bin/activate
             coverage run -m unittest unittests.test_kill_hogs
             coverage report -m kill_hogs/kill_hogs.py
-            coverage html
+            coverage html --include kill_hogs/kill_hogs.py
 
       - store_artifacts:
           path: htmlcov
