@@ -5,9 +5,9 @@
 # Check https://circleci.com/docs/2.0/language-python/ for more details
 #
 
-version: 2
+version: 2.1
 orbs:
-  codecov: codecov/codecov@1.0.4
+  codecov: codecov/codecov@1.0.5
 jobs:
   build:
     docker:
@@ -52,8 +52,7 @@ jobs:
           command: |
             . venv/bin/activate
             coverage run  --include=kill_hogs/kill_hogs.py  -m unittest unittests.test_kill_hogs
-            coverage report
-            coverage html
+            coverage xml
 
-      - store_artifacts:
-          path: htmlcov
+      - codecov/upload:
+          file: coverage.xml
