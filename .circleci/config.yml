@@ -6,8 +6,9 @@
 #
 
 version: 2.1
-orbs:
-  codecov: codecov/codecov@1.0.5
+# Disabled until an admin allows orbs on circleci.
+#orbs:
+#  codecov: codecov/codecov@1.0.5
 jobs:
   build:
     docker:
@@ -54,5 +55,5 @@ jobs:
             coverage run  --include=kill_hogs/kill_hogs.py  -m unittest unittests.test_kill_hogs
             coverage xml
 
-      - codecov/upload:
-          file: coverage.xml
+            #- codecov/upload:
+            #    file: coverage.xml
