@@ -1,5 +1,9 @@
+.. image:: https://img.shields.io/pypi/v/kill-hogs.svg
+   :target: https://pypi.org/project/kill-hogs
+   :alt: PyPI version
 [![CircleCI](https://circleci.com/gh/rug-cit-hpc/kill-hogs.svg?style=svg)](https://circleci.com/gh/rug-cit-hpc/kill-hogs)
 [![codecov](https://codecov.io/gh/rug-cit-hpc/kill-hogs/branch/master/graph/badge.svg)](https://codecov.io/gh/rug-cit-hpc/kill-hogs)
+
 # Kill hogs
 
 We at team HPC of the university of Groningen run job schedueling clusters.
