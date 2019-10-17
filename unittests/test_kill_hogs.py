@@ -90,7 +90,7 @@ mail_body: |
             with open('unittests/terminalsdump', 'r+b') as f:
                 data = f.read()
 
-        elif args[0] == 'finger p458749 -s -m':
+        elif args[0] == 'finger p458749 -l -m':
             with open('unittests/fingerdump', 'r+b') as f:
                 data = f.read()
 
