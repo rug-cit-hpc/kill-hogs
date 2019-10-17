@@ -197,13 +197,14 @@ def find_email(username):
 
     """
     finger = subprocess.run(
-        'finger {} -s -m'.format(username),
+        'finger {} -l -m'.format(username),
         shell=True,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE)
     try:
         data = finger.stdout.decode("utf-8").split('\n')
-        address = data[1].split()[1]
+        address = data[0].split()[3]
+
     except IndexError:
         # a more explicit pass
         return None
