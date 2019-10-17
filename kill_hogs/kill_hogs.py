@@ -203,14 +203,13 @@ def find_email(username):
         stderr=subprocess.PIPE)
     try:
         data = finger.stdout.decode("utf-8").split('\n')
-        address = data[0].split()[3]
+        # Basic check: exactly one `@` and at least one `.` after the `@`.
+        match = re.search(r'(?<=Name: )[^@]+@[^@]+\.[^@]+$', data[0])
+        return match.group(0)
 
     except IndexError:
         # a more explicit pass
         return None
-    # Basic check: exactly one `@` and at least one `.` after the `@`.
-    if re.match('[^@]+@[^@]+\.[^@]+', address):
-        return address
 
 
 def send_mail(sender: str, receiver: str, message: str, port: int = 25):
