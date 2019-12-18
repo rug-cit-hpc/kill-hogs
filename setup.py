@@ -21,7 +21,8 @@ setup(
     url="http://packages.python.org/kill_hogs",
     packages=['kill_hogs', 'unittests'],
     python_requires='>=3.6',
-    data_files=[('{}/.kill_hogs/'.format(os.environ['HOME']),['kill_hogs/kill_hogs.yml'])],
+    data_files=[('{}/.kill_hogs/'.format(os.environ['HOME']),
+                 ['kill_hogs/kill_hogs.yml'])],
     long_description=read('README.md'),
     long_description_content_type='text/markdown',
     classifiers=[
@@ -30,5 +31,8 @@ setup(
         "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
     ],
     entry_points={
-        'console_scripts': ['kill-hogs=kill_hogs.kill_hogs:main'],
+        'console_scripts': [
+            'kill-hogs=kill_hogs.kill_hogs:main',
+            'request-enforcement=kill_hogs.kill_hogs:request_enforcement'
+        ],
     })

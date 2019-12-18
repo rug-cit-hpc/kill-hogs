@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 from collections import defaultdict
+from pathlib import Path
 import argparse
 import json
 import logging
@@ -12,6 +13,8 @@ import smtplib
 import subprocess
 import time
 import yaml
+
+flagfile = '/tmp/kill_hogs_flagfile'
 
 
 def post_to_slack(message: str, slack_url: str):
@@ -32,6 +35,28 @@ def post_to_slack(message: str, slack_url: str):
         slack_url, data=data, headers={'Content-Type': 'application/json'})
     logging.info('Posting to slack')
     logging.info(str(response.status_code) + str(response.text))
+
+
+def request_enforcement():
+    """
+    Make a file in /tmp
+    that wil signal the script to run.
+    """
+    Path(flagfile).touch()
+
+
+def check_and_remove():
+    """
+    Deletete flag if it exists and return a bool whether it existed or not.
+    Returns:
+        True if flag exists
+        False otherwise.
+    """
+    path = Path(flagfile)
+    if path.exists():
+        path.unlink()
+        return True
+    return False
 
 
 def send_message_to_terminals(user: str, message: str):
@@ -104,6 +129,7 @@ def kill_hogs(config: dict,
               dummy: bool = False,
               slack: bool = False,
               email: bool = False,
+              request_only: bool = False,
               interval: float = .3):
     """
     Kill all processes of a user using more than <threshold> % of memory. And cpu.
@@ -116,6 +142,11 @@ def kill_hogs(config: dict,
         dummy (bool): If true, do not actually kill processes.
         slack (bool): send messages to slack.
     """
+    if request_only and not check_and_remove():
+        logging.info("Not enforcing since no flagfile is present.")
+        return None
+    else:
+        logging.info("Flagfile present, enforcing...")
 
     users = defaultdict(lambda: {'cpu_percent': 0, 'memory_percent': 0, 'processes': []})
 
@@ -260,6 +291,10 @@ def main():
         action='store_true',
         help="Mail offenders when their processes are killed.")
     parser.add_argument(
+        "--request_only",
+        action='store_true',
+        help="Only kill processes when a user has requested this.")
+    parser.add_argument(
         "--slack", action='store_true', help="Post messages to slack")
     parser.add_argument(
         "--config_file",
@@ -278,7 +313,8 @@ def main():
         interval=args.cpu_interval,
         dummy=args.dummy,
         slack=args.slack,
-        email=args.email)
+        email=args.email,
+        request_only=args.request_only)
 
 
 if __name__ == '__main__':

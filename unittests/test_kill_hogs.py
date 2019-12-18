@@ -191,7 +191,9 @@ mail_body: |
         self.assertFalse(kill_hogs.is_restricted('root'))
 
     @mock.patch('builtins.open', mock.mock_open(read_data=dummy_config))
-    @mock.patch('sys.argv', ['/opt/kill_hogs/kill_hogs.py', '--email', '--cpu_threshold', '9.0'])
+    @mock.patch(
+        'sys.argv',
+        ['/opt/kill_hogs/kill_hogs.py', '--email', '--cpu_threshold', '9.0'])
     @mock.patch('subprocess.run', side_effect=mocked_subprocess_run)
     @mock.patch('kill_hogs.kill_hogs.terminate', side_effect=mocked_terminate)
     @mock.patch('psutil.process_iter', side_effect=mocked_psutil_process_iter)
@@ -201,6 +203,25 @@ mail_body: |
             kill_hogs.main()
             self.assertEqual(len(mt.emails), 10)
 
+    @mock.patch('builtins.open', mock.mock_open(read_data=dummy_config))
+    @mock.patch('sys.argv', [
+        '/opt/kill_hogs/kill_hogs.py', '--email', '--cpu_threshold', '9.0',
+        '--request_only'
+    ])
+    @mock.patch('subprocess.run', side_effect=mocked_subprocess_run)
+    @mock.patch('kill_hogs.kill_hogs.terminate', side_effect=mocked_terminate)
+    @mock.patch('psutil.process_iter', side_effect=mocked_psutil_process_iter)
+    @mock.patch('kill_hogs.kill_hogs.find_email', lambda x: 'test@acme.com')
+    def test_request_only(self, mock_run, mock_terminate, mock_process_iter):
+        with mailtest.Server() as mt:
+            kill_hogs.request_enforcement()
+            kill_hogs.main()
+            # check that 10 emails have been sent.
+            self.assertEqual(len(mt.emails), 10)
+            kill_hogs.main()
+            # check that no more emails have been sent
+            # as enforcement has not been requested.
+            self.assertEqual(len(mt.emails), 10)
 
     @mock.patch('subprocess.run', side_effect=mocked_subprocess_run)
     def test_find_email(self, mock_run):
