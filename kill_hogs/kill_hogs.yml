@@ -19,9 +19,22 @@ mail_body: |
     The login node of the cluster is used by all users of the cluster to login and submit jobs. A high load on the login node will impair the usability of the cluster for other users.
     It is therefore not allowed to run processes that take a significant amount of memory or cpu power. We have a short queue available if you quickly want to test something. Alternatively you could use the interactive node which has less severe restrictions.
 
-    for more information see the pcluster wiki:
+    for more information see the cluster wiki:
     https://wiki.example.org
 
     The HPC team.
 
     The output of our check follows below:
+mail_body_request_only: |
+      Dear cluster user,
+
+      We detected resource intensive processes on the interactive node running from your account.
+      Your processes were killed upon a request by another user.
+      The interactive node is meant for more heavy processes but it should still be available to other users.
+
+      for more information see the cluster wiki:
+      https://wiki.example.org
+
+      The HPC team.
+
+      The output of our check follows below:

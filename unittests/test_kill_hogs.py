@@ -74,6 +74,19 @@ mail_body: |
     The HPC team.
 
     The output of our check follows below:
+mail_body_request_only: |
+      Dear cluster user,
+
+      We detected resource intensive processes on the interactive node running from your account.
+      Your processes were killed upon a request by another user.
+      The interactive node is meant for more heavy processes but it should still be available to other users.
+
+      for more information see the cluster wiki:
+      https://wiki.example.org
+
+      The HPC team.
+
+      The output of our check follows below:
 '''
     config_dict = yaml.load(dummy_config)
 

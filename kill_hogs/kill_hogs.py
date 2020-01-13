@@ -208,7 +208,10 @@ def kill_hogs(config: dict,
             if email:
                 email_address = find_email(proc.username())
                 if email_address is not None:
-                    email_message = config['mail_body']
+                    if request_only:
+                        email_message = config['mail_body_request_only']
+                    else:
+                        email_message = config['mail_body']
                     email_message += '\n'.join(message)
                     send_mail(config['from_address'], email_address,
                               email_message, config['mail_server_port'])
