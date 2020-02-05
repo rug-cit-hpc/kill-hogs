@@ -216,8 +216,8 @@ def kill_hogs(config: dict,
                 except (psutil.NoSuchProcess, FileNotFoundError):
                     pass
             logging.info('\n'.join(message))
-#            send_message_to_terminals(proc.username(),
-#                                      config['terminal_warning'])
+            send_message_to_terminals(proc.username(),
+                                      config['terminal_warning'])
 
             if slack:
                 post_to_slack('\n'.join(message), config['slack_url'])
