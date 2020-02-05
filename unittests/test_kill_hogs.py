@@ -2,6 +2,7 @@ from unittest import mock
 from kill_hogs import kill_hogs
 import mailtest
 import random
+import time
 import unittest
 import yaml
 
@@ -110,6 +111,9 @@ mail_body_request_only: |
         elif 'finger' in args[0]:
             data = b'finger: mysteryguest: no such user.'
 
+        elif args[0].startswith('nvidia-smi'):
+            data = b'123456\n123456\n'
+
         else:
             data = None
 
@@ -154,6 +158,9 @@ mail_body_request_only: |
             def memory_percent(self):
                 return 5.5
 
+            def create_time(self):
+                return time.time() - 5400
+
         for p in range(10):
             yield MockedProc(184444 + p)
         # A root user with way more cpu who should not be killed.
@@ -186,7 +193,8 @@ mail_body_request_only: |
     def test_no_innocents_are_killed(self, mock_run, mock_terminate,
                                      mock_process_iter):
         kill_hogs.kill_hogs(
-            config=self.config_dict, memory_threshold=10, cpu_threshold=600)
+            config=self.config_dict, memory_threshold=10, cpu_threshold=600,
+            gpu_max_walltime=120)
         self.assertFalse(mock_terminate.called)
 
     @mock.patch('subprocess.run', side_effect=mocked_subprocess_run)
@@ -195,7 +203,8 @@ mail_body_request_only: |
     def test_violators_are_shot(self, mock_run, mock_terminate,
                                 mock_process_iter):
         kill_hogs.kill_hogs(
-            config=self.config_dict, memory_threshold=10, cpu_threshold=9.5)
+            config=self.config_dict, memory_threshold=10, cpu_threshold=9.5,
+            gpu_max_walltime=60)
         self.assertTrue(mock_terminate.called)
 
     def test_is_restricted(self):
