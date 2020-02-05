@@ -124,6 +124,12 @@ def is_restricted(username: str, pattern: str = '^(?!root).*'):
 
 
 def proc_is_using_gpu(pid):
+    """
+    Check if a process is using the GPU using the nvidia-smi tool.
+
+    Args:
+        pid (int): process id of the process.
+    """
     global nvidia_smi_cache
     if not nvidia_smi_cache:
         nvidia_smi = subprocess.run('nvidia-smi --query-compute-apps=pid --format=csv,noheader', shell=True, stdout=subprocess.PIPE)
