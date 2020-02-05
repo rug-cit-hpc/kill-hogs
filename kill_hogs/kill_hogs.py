@@ -113,7 +113,7 @@ def terminate(kill_list):
 def is_restricted(username: str, pattern: str = '^(?!root).*'):
     """
     Test if processes of username should be limited in their resources.
-    Bu default everybody except root is restricted. (this, of course, can be dangerous)
+    By default everybody except root is restricted. (this, of course, can be dangerous)
 
     Args:
         username (str): the username to test
