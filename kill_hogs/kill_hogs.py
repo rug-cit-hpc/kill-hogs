@@ -15,7 +15,7 @@ import time
 import yaml
 
 flagfile = '/tmp/kill_hogs_flagfile'
-
+nvidia_smi_cache = ''
 
 def post_to_slack(message: str, slack_url: str):
     """
@@ -123,7 +123,15 @@ def is_restricted(username: str, pattern: str = '^(?!root).*'):
     return re.match(pattern, username) is not None
 
 
+def proc_is_using_gpu(pid):
+    global nvidia_smi_cache
+    if not nvidia_smi_cache:
+        nvidia_smi = subprocess.run('nvidia-smi --query-compute-apps=pid --format=csv,noheader', shell=True, stdout=subprocess.PIPE)
+        nvidia_smi_cache = nvidia_smi.stdout
+    return str(pid) in nvidia_smi_cache.decode('ascii').splitlines()
+
 def kill_hogs(config: dict,
+              gpu_max_walltime,
               memory_threshold,
               cpu_threshold,
               dummy: bool = False,
@@ -148,7 +156,7 @@ def kill_hogs(config: dict,
     else:
         logging.debug("enforcing...")
 
-    users = defaultdict(lambda: {'cpu_percent': 0, 'memory_percent': 0, 'processes': []})
+    users = defaultdict(lambda: {'cpu_percent': 0, 'memory_percent': 0, 'processes': [], 'gpu_walltime': 0})
 
     procs = list(psutil.process_iter())
 
@@ -176,17 +184,20 @@ def kill_hogs(config: dict,
 
             users[username]['memory_percent'] += proc.cached_memory_percent
             users[username]['cpu_percent'] += proc.cached_cpu_percent
+            if gpu_max_walltime > 0 and proc_is_using_gpu(proc.pid):
+                users[username]['gpu_walltime'] += (time.time() - proc.create_time()) / 60
 
             users[username]['processes'].append(proc)
         except (psutil.NoSuchProcess, FileNotFoundError):
             pass
 
     for username, data in users.items():
-        if data['memory_percent'] > memory_threshold or data['cpu_percent'] > cpu_threshold:
+        if data['memory_percent'] > memory_threshold or data['cpu_percent'] > cpu_threshold or data['gpu_walltime'] > gpu_max_walltime:
             message = [
                 'User {} uses \n {:.2f} % of cpu. '.format(
                     username, data['cpu_percent']),
                 '{:.2f} % of memory. '.format(data['memory_percent']),
+                '{:.0f} minutes of GPU time'.format(data['gpu_walltime']),
                 'The following processes will be killed:'
             ]
             for proc in data['processes']:
@@ -199,8 +210,8 @@ def kill_hogs(config: dict,
                 except (psutil.NoSuchProcess, FileNotFoundError):
                     pass
             logging.info('\n'.join(message))
-            send_message_to_terminals(proc.username(),
-                                      config['terminal_warning'])
+#            send_message_to_terminals(proc.username(),
+#                                      config['terminal_warning'])
 
             if slack:
                 post_to_slack('\n'.join(message), config['slack_url'])
@@ -271,6 +282,11 @@ def main():
     logging.basicConfig(level=logging.INFO)
     parser = argparse.ArgumentParser()
     parser.add_argument(
+        "--gpu_max_walltime",
+        type=float,
+        default=0,
+        help="maximum wall time limit in minutes for using a gpu")
+    parser.add_argument(
         "--memory_threshold",
         type=float,
         default=10,
@@ -311,6 +327,7 @@ def main():
 
     kill_hogs(
         config=config,
+        gpu_max_walltime=args.gpu_max_walltime,
         memory_threshold=args.memory_threshold,
         cpu_threshold=args.cpu_threshold,
         interval=args.cpu_interval,
