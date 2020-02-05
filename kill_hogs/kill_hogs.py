@@ -143,10 +143,10 @@ def kill_hogs(config: dict,
         slack (bool): send messages to slack.
     """
     if request_only and not check_and_remove():
-        logging.info("Not enforcing since no flagfile is present.")
+        logging.debug("Not enforcing since no flagfile is present.")
         return None
     else:
-        logging.info("Flagfile present, enforcing...")
+        logging.debug("enforcing...")
 
     users = defaultdict(lambda: {'cpu_percent': 0, 'memory_percent': 0, 'processes': []})
 
