@@ -216,23 +216,24 @@ def kill_hogs(config: dict,
                 except (psutil.NoSuchProcess, FileNotFoundError):
                     pass
             logging.info('\n'.join(message))
-            send_message_to_terminals(proc.username(),
-                                      config['terminal_warning'])
 
-            if slack:
-                post_to_slack('\n'.join(message), config['slack_url'])
-
-            if email:
-                email_address = find_email(proc.username())
-                if email_address is not None:
-                    if request_only:
-                        email_message = config['mail_body_request_only']
-                    else:
-                        email_message = config['mail_body']
-                    email_message += '\n'.join(message)
-                    send_mail(config['from_address'], email_address,
-                              email_message, config['mail_server_port'])
             if not dummy:
+                send_message_to_terminals(proc.username(),
+                                          config['terminal_warning'])
+                if slack:
+                    post_to_slack('\n'.join(message), config['slack_url'])
+
+                if email:
+                    email_address = find_email(proc.username())
+                    if email_address is not None:
+                        if request_only:
+                            email_message = config['mail_body_request_only']
+                        else:
+                            email_message = config['mail_body']
+                        email_message += '\n'.join(message)
+                        send_mail(config['from_address'], email_address,
+                                  email_message, config['mail_server_port'])
+
                 terminate(data['processes'])
 
 
