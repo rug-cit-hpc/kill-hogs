@@ -126,15 +126,21 @@ def procs_using_gpu():
     """
     Return which process IDs are using the GPU, based on the output of the nvidia-smi tool.
     """
-    nvidia_smi = subprocess.run('nvidia-smi --query-compute-apps=pid --format=csv,noheader',
-                                 shell=True, stdout=subprocess.PIPE)
+    try:
+        nvidia_smi = subprocess.run(
+            'nvidia-smi --query-compute-apps=pid --format=csv,noheader',
+            shell=True,
+            stdout=subprocess.PIPE)
+    except FileNotFoundError:  # No nvidia-smi present
+        return []
     pids = [int(pid) for pid in nvidia_smi.stdout.decode('ascii').splitlines()]
     return pids
 
+
 def kill_hogs(config: dict,
-              gpu_max_walltime,
               memory_threshold,
               cpu_threshold,
+              gpu_max_walltime: float = 1e9,
               dummy: bool = False,
               slack: bool = False,
               email: bool = False,
