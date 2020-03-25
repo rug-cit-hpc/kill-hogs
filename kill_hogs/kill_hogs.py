@@ -126,12 +126,11 @@ def procs_using_gpu():
     """
     Return which process IDs are using the GPU, based on the output of the nvidia-smi tool.
     """
-    try:
-        nvidia_smi = subprocess.run(
-            'nvidia-smi --query-compute-apps=pid --format=csv,noheader',
-            shell=True,
-            stdout=subprocess.PIPE)
-    except FileNotFoundError:  # No nvidia-smi present
+    nvidia_smi = subprocess.run(
+        'nvidia-smi --query-compute-apps=pid --format=csv,noheader',
+        shell=True,
+        stdout=subprocess.PIPE)
+    if nvidia_smi.returncode == 127:  # nvidia_smi not found.
         return []
     pids = [int(pid) for pid in nvidia_smi.stdout.decode('ascii').splitlines()]
     return pids

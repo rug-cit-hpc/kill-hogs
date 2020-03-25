@@ -99,6 +99,7 @@ mail_body_request_only: |
             def __init__(self, stdout, stderr=None):
                 self.stdout = stdout
                 self.stderr = stderr
+                self.returncode = 0
 
         if args[0] == 'w -s -h':
             with open('unittests/terminalsdump', 'r+b') as f:
