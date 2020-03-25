@@ -17,6 +17,7 @@ import yaml
 flagfile = '/tmp/kill_hogs_flagfile'
 nvidia_smi_cache = ''
 
+
 def post_to_slack(message: str, slack_url: str):
     """
     Post a message to slack.
@@ -132,14 +133,24 @@ def proc_is_using_gpu(pid):
     """
     global nvidia_smi_cache
     if not nvidia_smi_cache:
-        nvidia_smi = subprocess.run('nvidia-smi --query-compute-apps=pid --format=csv,noheader', shell=True, stdout=subprocess.PIPE)
+        try:
+            nvidia_smi = subprocess.run(
+                'nvidia-smi --query-compute-apps=pid --format=csv,noheader',
+                shell=True,
+                stdout=subprocess.PIPE)
+        except FileNotFoundError:  # No nvidia-smi present
+            return False
         nvidia_smi_cache = nvidia_smi.stdout
-    return str(pid) in nvidia_smi_cache.decode('ascii').splitlines()
+    try:
+        return str(pid) in nvidia_smi_cache.decode('ascii').splitlines()
+    except AttributeError:
+        return False
+
 
 def kill_hogs(config: dict,
-              gpu_max_walltime,
               memory_threshold,
               cpu_threshold,
+              gpu_max_walltime: float = 1e10,
               dummy: bool = False,
               slack: bool = False,
               email: bool = False,
@@ -153,6 +164,7 @@ def kill_hogs(config: dict,
     Args:
         memory_threshold (float): Percentage of user resources above which to kill.
         cpu_threshold (float): Percentage of user resources above which to kill.
+        gpu_max_walltime (float): Max allowed gpu walltime.
         dummy (bool): If true, do not actually kill processes.
         slack (bool): send messages to slack.
     """
@@ -198,7 +210,9 @@ def kill_hogs(config: dict,
             pass
 
     for username, data in users.items():
-        if data['memory_percent'] > memory_threshold or data['cpu_percent'] > cpu_threshold or data['gpu_walltime'] > gpu_max_walltime:
+        if (data['memory_percent'] > memory_threshold or
+                data['cpu_percent'] > cpu_threshold or
+                data['gpu_walltime'] > gpu_max_walltime):
             message = [
                 'User {} uses \n {:.2f} % of cpu. '.format(
                     username, data['cpu_percent']),
