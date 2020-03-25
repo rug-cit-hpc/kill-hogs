@@ -42,7 +42,7 @@ class PostToSlackTestcase(unittest.TestCase):
         self.assertIn(
             mock.call(
                 'https://hooks.slack.com/services/some/random/string',
-                data=b'{"channel": "#peregrine-alerts", '
+                data=b'{"channel": "#kill-hogs", '
                 b'"username": "kill-hogs", "text": "Hello world", '
                 b'"icon_emoji": ":scales:"}',
                 headers={'Content-Type': 'application/json'}),

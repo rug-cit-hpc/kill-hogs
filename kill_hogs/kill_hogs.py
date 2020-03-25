@@ -25,7 +25,7 @@ def post_to_slack(message: str, slack_url: str):
         slack_url (str): url to post message to
     """
     data = json.dumps({
-        'channel': '#peregrine-alerts',
+        'channel': '#kill-hogs',
         'username': 'kill-hogs',
         'text': message,
         'icon_emoji': ':scales:'
