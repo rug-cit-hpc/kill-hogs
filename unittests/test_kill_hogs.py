@@ -89,7 +89,7 @@ mail_body_request_only: |
 
       The output of our check follows below:
 '''
-    config_dict = yaml.load(dummy_config)
+    config_dict = yaml.load(dummy_config, Loader=yaml.Loader)
 
     def mocked_subprocess_run(*args, **kwargs):
         """
