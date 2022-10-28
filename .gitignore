@@ -17,3 +17,5 @@ ChangeLog
 *.egg
 *egg-info
 .eggs
+Pipfile.lock
+Pipfile
