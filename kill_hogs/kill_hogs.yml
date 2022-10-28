@@ -2,6 +2,9 @@
 slack_url: 'https://hooks.slack.com/services/<some secret string>'
 # Pattern (python re) to filter users whose processes can be killed.
 user_pattern: '^((s|p|f)[0-9]{5,7}|umcg-[a-z]{3,10})'
+# Whitelist of programs that should be ignored.
+# this enables users to cheat by renaming their executables.
+software_whitelist: ['git']
 # Origin adress when sending mails to cluster users.
 from_address: 'root@some-cluster.org'
 # The port at which the local mailserver is running.

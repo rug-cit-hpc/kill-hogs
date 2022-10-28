@@ -186,6 +186,11 @@ def kill_hogs(config: dict,
             if proc.uids().real == 0 or (proc.cached_memory_percent < .1
                                          and proc.cached_cpu_percent < 1):
                 continue  # do not kill root processes.
+
+            # Do not count usage by whitelisted software.
+            if proc.name() in config['software_whitelist']:
+                continue
+
             # Check username here. It is somewhat expensive.
             username = proc.username()
             if not is_restricted(username, config['user_pattern']):

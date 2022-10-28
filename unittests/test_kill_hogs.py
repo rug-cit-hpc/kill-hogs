@@ -55,6 +55,7 @@ class KillhogsTestCase(unittest.TestCase):
 ---
 slack_url: 'https://hooks.slack.com/services/some/random/string'
 user_pattern: '^((s|p|f)[0-9]{5,7}|umcg-[a-z]{3,10})'
+software_whitelist: ['git']
 from_address: 'root@some-cluster.org'
 #Port at which local mailserver is running.
 mail_server_port: 1025
@@ -169,6 +170,8 @@ mail_body_request_only: |
             1, name='root_stuff', username='root', cpu_percent=700.0)
         yield MockedProc(
             14584, name='dontkillme', username='duckling', cpu_percent=1800.0)
+        yield MockedProc(
+            14585, name='git', username='p987541', cpu_percent=1900.0)
 
     def mocked_terminate(*args, **kwargs):
         """
